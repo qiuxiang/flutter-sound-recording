@@ -9,7 +9,18 @@ import 'package:pigeon/pigeon.dart';
   ),
 )
 @HostApi()
-abstract class MainApi {
+abstract class SoundRecordingApi {
   @async
   void init(int bufferSize, int sampleRate);
+
+  @async
+  void start();
+
+  @async
+  void stop();
+}
+
+@FlutterApi()
+abstract class SoundRecordingHandler {
+  void read(List<int> buffer);
 }
