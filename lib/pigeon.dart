@@ -1,3 +1,4 @@
+// ignore: depend_on_referenced_packages
 import 'package:pigeon/pigeon.dart';
 
 @ConfigurePigeon(
@@ -10,8 +11,5 @@ import 'package:pigeon/pigeon.dart';
 @HostApi()
 abstract class MainApi {
   @async
-  void init();
-
-  @async
-  void open(int bufferSize, int sampleRate);
+  void init(int bufferSize, int sampleRate);
 }
