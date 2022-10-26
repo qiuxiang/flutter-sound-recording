@@ -7,16 +7,12 @@ void Function(List<int>)? onDataCallback;
 _Handler? _handler;
 
 class SoundRecording {
-  static Future<void> init({int bufferSize = 8192, int sampleRate = 44100}) {
+  static Future<void> start({int bufferSize = 8192, int sampleRate = 44100}) {
     if (_handler == null) {
       _handler = _Handler();
       SoundRecordingHandler.setup(_handler);
     }
-    return _api.init(bufferSize, sampleRate);
-  }
-
-  static Future<void> start() {
-    return _api.start();
+    return _api.start(bufferSize, sampleRate);
   }
 
   static Future<void> stop() {

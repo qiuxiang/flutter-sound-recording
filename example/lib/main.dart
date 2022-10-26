@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sound_recording/sound_recording.dart';
 
@@ -34,44 +32,46 @@ class _AppState extends State<App> {
     return MaterialApp(
       theme: ThemeData.light(useMaterial3: true),
       darkTheme: ThemeData.dark(useMaterial3: true),
-      home: Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 0,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        ),
-        body: Column(children: [
-          const SizedBox(height: 16),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-            ElevatedButton(
-              onPressed: () async {
-                if (await Permission.microphone.request().isGranted) {
-                  SoundRecording.init(sampleRate: 8000, bufferSize: 1024);
-                }
-              },
-              child: const Text('INIT'),
-            ),
-            const ElevatedButton(
-              onPressed: SoundRecording.start,
-              child: Text('START'),
-            ),
-            const ElevatedButton(
-              onPressed: SoundRecording.stop,
-              child: Text('STOP'),
+      home: WillPopScope(
+        onWillPop: () async {
+          await SoundRecording.stop();
+          return true;
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            toolbarHeight: 0,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          ),
+          body: Column(children: [
+            const SizedBox(height: 16),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              ElevatedButton(
+                onPressed: () async {
+                  if (await Permission.microphone.request().isGranted) {
+                    SoundRecording.start(sampleRate: 8000, bufferSize: 1024);
+                  }
+                },
+                child: const Text('START'),
+              ),
+              const ElevatedButton(
+                onPressed: SoundRecording.stop,
+                child: Text('STOP'),
+              ),
+            ]),
+            const SizedBox(height: 16),
+            Expanded(
+              child: StreamBuilder(
+                stream: streamController.stream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Waveform(snapshot.data!);
+                  }
+                  return const SizedBox();
+                },
+              ),
             ),
           ]),
-          const SizedBox(height: 16),
-          Expanded(
-            child: StreamBuilder(
-              stream: streamController.stream,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Waveform(snapshot.data!);
-                }
-                return const SizedBox();
-              },
-            ),
-          ),
-        ]),
+        ),
       ),
     );
   }
@@ -106,7 +106,13 @@ class WaveformPainter extends CustomPainter {
       x += slice;
       return offset;
     });
-    canvas.drawPoints(PointMode.lines, points.toList(), Paint());
+    canvas.drawPoints(
+      PointMode.lines,
+      points.toList(),
+      Paint()
+        ..strokeWidth = 1
+        ..color = Colors.black54,
+    );
   }
 
   @override

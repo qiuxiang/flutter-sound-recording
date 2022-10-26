@@ -5,7 +5,6 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
-import androidx.annotation.UiThread
 import io.flutter.plugin.common.BinaryMessenger
 import qiuxiang.sound_recording.Pigeon.SoundRecordingHandler
 import kotlin.concurrent.thread
@@ -23,14 +22,20 @@ class SoundRecordingApi(messenger: BinaryMessenger) : Pigeon.SoundRecordingApi {
   private val recording: Boolean
     get() = audioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING
 
-  override fun init(bufferSize: Long, sampleRate: Long, result: Pigeon.Result<Void>) {
-    if (recording || recordingThread?.isAlive == true) {
-      return
+  private fun readData() {
+    val buffer = ShortArray(bufferSize)
+    while (recording) {
+      audioRecord?.read(buffer, 0, bufferSize)
+      handler.post {
+        recordingHandler.read(buffer.map { i -> i.toLong() }.toMutableList()) {}
+      }
     }
+    stop()
+  }
 
-    if (initialized) {
-      audioRecord?.stop()
-      audioRecord?.release()
+  override fun start(bufferSize: Long, sampleRate: Long, result: Pigeon.Result<Void>) {
+    if (recording) {
+      return result.success(null)
     }
 
     this.bufferSize = bufferSize.toInt()
@@ -42,38 +47,24 @@ class SoundRecordingApi(messenger: BinaryMessenger) : Pigeon.SoundRecordingApi {
       this.bufferSize * 2
     )
     if (initialized) {
-      recordingThread = thread(start = false) { readData() }
+      audioRecord?.startRecording()
+      recordingThread = thread { readData() }
       result.success(null)
     } else {
       result.error(null)
     }
   }
 
-  @UiThread
-  private fun readData() {
-    val buffer = ShortArray(bufferSize)
-    while (recording) {
-      audioRecord?.read(buffer, 0, bufferSize)
-      handler.post {
-        recordingHandler.read(buffer.map { i -> i.toLong() }.toMutableList()) {}
-      }
-    }
-  }
-
-  override fun start(result: Pigeon.Result<Void>) {
-    if (initialized && recordingThread != null) {
-      audioRecord?.startRecording()
-      recordingThread?.start()
-    }
+  override fun stop(result: Pigeon.Result<Void>) {
+    stop()
     result.success(null)
   }
 
-  override fun stop(result: Pigeon.Result<Void>) {
+  private fun stop() {
     if (initialized) {
       audioRecord?.stop()
       audioRecord?.release()
       audioRecord = null
     }
-    result.success(null)
   }
 }
