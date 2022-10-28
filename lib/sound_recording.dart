@@ -26,7 +26,7 @@ class SoundRecording {
 
   /// Set onData listener.
   ///
-  /// The date is mono 16Bit int list. 
+  /// The date is mono 16Bit int list.
   static onData(void Function(List<int>) callback) {
     return _onData = callback;
   }
