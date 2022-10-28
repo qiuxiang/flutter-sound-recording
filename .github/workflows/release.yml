@@ -23,6 +23,7 @@ jobs:
         run: |
           flutter pub get
           make
+          flutter format lib
           cd example
           flutter create --platforms android .
           flutter build apk --target-platform android-arm64

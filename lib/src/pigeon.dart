@@ -3,7 +3,7 @@ import 'package:pigeon/pigeon.dart';
 
 @ConfigurePigeon(
   PigeonOptions(
-    dartOut: 'lib/pigeon.g.dart',
+    dartOut: 'lib/src/pigeon.g.dart',
     javaOut: 'android/src/main/java/qiuxiang/sound_recording/Pigeon.java',
     javaOptions: JavaOptions(package: 'qiuxiang.sound_recording'),
   ),
