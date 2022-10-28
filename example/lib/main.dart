@@ -3,6 +3,7 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:scidart/numdart.dart';
 import 'package:sound_recording/sound_recording.dart';
@@ -55,46 +56,51 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData.light(useMaterial3: true),
-      darkTheme: ThemeData.dark(useMaterial3: true),
       home: WillPopScope(
         onWillPop: () async {
           await SoundRecording.stop();
           return true;
         },
-        child: Scaffold(
-          appBar: AppBar(
-            toolbarHeight: 0,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        child: AnnotatedRegion(
+          value: SystemUiOverlayStyle(
+            systemNavigationBarIconBrightness: Brightness.dark,
+            systemNavigationBarColor: Theme.of(context).scaffoldBackgroundColor,
           ),
-          body: Column(children: [
-            const SizedBox(height: 16),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              ElevatedButton(
-                onPressed: () async {
-                  if (await Permission.microphone.request().isGranted) {
-                    SoundRecording.start(sampleRate: 8000, bufferSize: 1024);
-                  }
-                },
-                child: const Text('START'),
-              ),
-              const ElevatedButton(
-                onPressed: SoundRecording.stop,
-                child: Text('STOP'),
+          child: Scaffold(
+            appBar: AppBar(
+              toolbarHeight: 0,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            ),
+            body: Column(children: [
+              const SizedBox(height: 16),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    if (await Permission.microphone.request().isGranted) {
+                      SoundRecording.start(sampleRate: 8000, bufferSize: 1024);
+                    }
+                  },
+                  child: const Text('START'),
+                ),
+                const ElevatedButton(
+                  onPressed: SoundRecording.stop,
+                  child: Text('STOP'),
+                ),
+              ]),
+              const SizedBox(height: 16),
+              Expanded(
+                child: StreamBuilder(
+                  stream: streamController.stream,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Waveform(snapshot.data!);
+                    }
+                    return const SizedBox();
+                  },
+                ),
               ),
             ]),
-            const SizedBox(height: 16),
-            Expanded(
-              child: StreamBuilder(
-                stream: streamController.stream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Waveform(snapshot.data!);
-                  }
-                  return const SizedBox();
-                },
-              ),
-            ),
-          ]),
+          ),
         ),
       ),
     );
