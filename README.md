@@ -1,6 +1,6 @@
 Flutter sound recording plugin for DSP purposes, now supports android.
 
-<img src=https://user-images.githubusercontent.com/1709072/198487233-7108f863-ca97-4ce2-a43b-2b5e8bcd09d8.png width=300 >
+<img src=https://user-images.githubusercontent.com/1709072/198511525-31c77f2b-09dd-4a95-a5ae-81b8ecb16447.png width=300 >
 
 ## Usage
 
