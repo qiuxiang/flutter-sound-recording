@@ -62,7 +62,9 @@ class SoundRecordingApi(messenger: BinaryMessenger) : Pigeon.SoundRecordingApi {
 
   private fun stop() {
     if (initialized) {
-      audioRecord?.stop()
+      if (recording) {
+        audioRecord?.stop()
+      }
       audioRecord?.release()
       audioRecord = null
     }
