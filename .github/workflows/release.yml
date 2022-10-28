@@ -21,6 +21,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Build
         run: |
+          flutter pub get
+          make
           cd example
           flutter create .
           flutter build apk --target-platform android-arm64
@@ -34,7 +36,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
       - name: Release
         run: |
-          echo '${{ secrets.CREDENTIALS_JSON }}' > $(which flutter | sed -r 's/bin\/flutter/.pub-cache\/credentials.json/')
+          echo '${{ secrets.CREDENTIALS_JSON }}' > ~/.config/dart/pub-credentials.json
           export version=$(echo ${{ steps.release.outputs.tag_name }} | sed s/v//)
           sed -i -r "s/version: .*/version: $version/" pubspec.yaml
           sed -i "1s/^/## $version\n\n${{ steps.release.outputs.body }}\n\n/" CHANGELOG.md
