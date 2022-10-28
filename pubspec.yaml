@@ -1,5 +1,5 @@
 name: sound_recording
-description: A new Flutter plugin project.
+description: Flutter sound recording plugin for DSP purposes, now supports android.
 version: 0.0.0
 repository: https://github.com/qiuxiang/flutter-sound-recording
 
