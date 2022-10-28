@@ -1,6 +1,6 @@
 name: sound_recording
 description: A new Flutter plugin project.
-version: 0.0.1
+version: 0.0.0
 repository: https://github.com/qiuxiang/flutter-sound-recording
 
 environment:
