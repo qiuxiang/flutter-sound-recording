@@ -129,9 +129,9 @@ class WaveformPainter extends CustomPainter {
     final slice = size.width / (data.spectrum.length - 1);
     var x = 0.0;
     for (final i in data.spectrum) {
-      final y = (i / 262144) * size.height;
-      final hslColor = HSLColor.fromAHSL(
-          1, data.spectrum.indexOf(i) * 360 / data.spectrum.length, 1, 0.5);
+      final y = (sqrt(i) / 2048) * size.height;
+      final hslColor = HSLColor.fromAHSL(1,
+          180 + data.spectrum.indexOf(i) * 180 / data.spectrum.length, 1, 0.5);
       canvas.drawRect(
         Rect.fromLTWH(x, size.height - y, slice, y),
         Paint()..color = hslColor.toColor(),
@@ -144,7 +144,7 @@ class WaveformPainter extends CustomPainter {
     final slice = size.width / (data.items.length - 1);
     var x = 0.0;
     final points = data.items.map((i) {
-      final y = (0.5 + i / 32768) * size.height;
+      final y = (0.5 + i / 65536) * size.height;
       final offset = Offset(x, y);
       x += slice;
       return offset;
@@ -152,9 +152,7 @@ class WaveformPainter extends CustomPainter {
     canvas.drawPoints(
       PointMode.polygon,
       points.toList(),
-      Paint()
-        ..strokeWidth = 1
-        ..color = Colors.grey,
+      Paint()..color = Colors.grey,
     );
   }
 
