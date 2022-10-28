@@ -24,7 +24,7 @@ jobs:
           flutter pub get
           make
           cd example
-          flutter create .
+          flutter create --platforms android .
           flutter build apk --target-platform android-arm64
       - uses: actions/upload-release-asset@v1
         env:
