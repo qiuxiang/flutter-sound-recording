@@ -15,7 +15,7 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           channel: stable
-      - uses: bruceadams/get-release@v1.2.3
+      - uses: bruceadams/get-release@v1.3.2
         id: release
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -36,6 +36,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
       - name: Release
         run: |
+          mkdir -p ~/.config/dart
           echo '${{ secrets.CREDENTIALS_JSON }}' > ~/.config/dart/pub-credentials.json
           export version=$(echo ${{ steps.release.outputs.tag_name }} | sed s/v//)
           sed -i -r "s/version: .*/version: $version/" pubspec.yaml
