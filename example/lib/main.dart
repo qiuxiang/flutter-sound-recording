@@ -1,36 +1,19 @@
 import 'dart:async';
-import 'dart:isolate';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:scidart/numdart.dart';
-import 'package:scidart/scidart.dart';
 import 'package:sound_recording/sound_recording.dart';
-
-late SendPort sendPort;
-final streamController = StreamController<RecordingData>();
-
-class RecordingData {
-  final List<int> items;
-  final List<double> spectrum;
-
-  const RecordingData(this.items, this.spectrum);
-}
+import 'package:fftea/fftea.dart';
 
 void main() {
-  final receivePort = ReceivePort();
-  receivePort.listen((message) {
-    if (message is SendPort) {
-      sendPort = message;
-      SoundRecording.onData(sendPort.send);
-    } else {
-      streamController.sink.add(message);
-    }
-  });
-  Isolate.spawn(processRecordingData, receivePort.sendPort);
   runApp(const App());
 }
+
+const sampleRate = 8000;
+const bufferSize = 1024;
+final stft = STFT(bufferSize);
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -39,18 +22,15 @@ class App extends StatefulWidget {
   State<App> createState() => _AppState();
 }
 
-Future<void> processRecordingData(SendPort sendPort) async {
-  final receivePort = ReceivePort();
-  receivePort.listen((data) {
-    final items = (data as List).cast<int>().map((i) => i.toDouble()).toList();
-    final spectrum = rfft(Array(items));
-    sendPort.send(RecordingData(data.cast<int>(),
-        spectrum.sublist(0, spectrum.length ~/ 2).map(complexAbs).toList()));
-  });
-  sendPort.send(receivePort.sendPort);
-}
-
 class _AppState extends State<App> {
+  final streamController = StreamController<List<int>>();
+
+  @override
+  void initState() {
+    super.initState();
+    SoundRecording.onData(streamController.sink.add);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -71,7 +51,8 @@ class _AppState extends State<App> {
               ElevatedButton(
                 onPressed: () async {
                   if (await Permission.microphone.request().isGranted) {
-                    SoundRecording.start(sampleRate: 8000, bufferSize: 1024);
+                    SoundRecording.start(
+                        sampleRate: sampleRate, bufferSize: bufferSize);
                   }
                 },
                 child: const Text('START'),
@@ -101,7 +82,7 @@ class _AppState extends State<App> {
 }
 
 class Waveform extends StatelessWidget {
-  final RecordingData data;
+  final List<int> data;
 
   const Waveform(this.data, {super.key});
 
@@ -115,7 +96,7 @@ class Waveform extends StatelessWidget {
 }
 
 class WaveformPainter extends CustomPainter {
-  final RecordingData data;
+  final List<int> data;
 
   WaveformPainter(this.data);
 
@@ -126,24 +107,28 @@ class WaveformPainter extends CustomPainter {
   }
 
   void paintSpectrum(Canvas canvas, Size size) {
-    final slice = size.width / (data.spectrum.length - 1);
-    var x = 0.0;
-    for (final i in data.spectrum) {
-      final y = (sqrt(i) / 2048) * size.height;
-      final hslColor = HSLColor.fromAHSL(1,
-          180 + data.spectrum.indexOf(i) * 180 / data.spectrum.length, 1, 0.5);
-      canvas.drawRect(
-        Rect.fromLTWH(x, size.height - y, slice, y),
-        Paint()..color = hslColor.toColor(),
-      );
-      x += slice;
-    }
+    stft.run(data.map((i) => i.toDouble()).toList(), (freq) {
+      final spectrum = freq.magnitudes().sublist(0, data.length ~/ 4);
+      final slice = size.width / (spectrum.length - 1);
+      var x = 0.0;
+      for (var index = 0; index < spectrum.length; index += 1) {
+        final i = spectrum[index];
+        final y = (sqrt(i) / 1024) * size.height;
+        final hslColor =
+            HSLColor.fromAHSL(1, 180 + index * 180 / spectrum.length, 1, 0.5);
+        canvas.drawRect(
+          Rect.fromLTWH(x, size.height - y, slice, y),
+          Paint()..color = hslColor.toColor(),
+        );
+        x += slice;
+      }
+    });
   }
 
   void paintWaveForm(Canvas canvas, Size size) {
-    final slice = size.width / (data.items.length - 1);
+    final slice = size.width / (data.length - 1);
     var x = 0.0;
-    final points = data.items.map((i) {
+    final points = data.map((i) {
       final y = (0.5 + i / 65536) * size.height;
       final offset = Offset(x, y);
       x += slice;
@@ -152,7 +137,9 @@ class WaveformPainter extends CustomPainter {
     canvas.drawPoints(
       PointMode.polygon,
       points.toList(),
-      Paint()..color = Colors.grey,
+      Paint()
+        ..color = Colors.grey
+        ..strokeWidth = 1,
     );
   }
 
