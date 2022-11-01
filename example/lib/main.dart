@@ -108,7 +108,7 @@ class WaveformPainter extends CustomPainter {
 
   void paintSpectrum(Canvas canvas, Size size) {
     stft.run(data.map((i) => i.toDouble()).toList(), (freq) {
-      final spectrum = freq.magnitudes().sublist(0, data.length ~/ 4);
+      final spectrum = freq.magnitudes().sublist(0, data.length ~/ 2);
       final slice = size.width / (spectrum.length - 1);
       var x = 0.0;
       for (var index = 0; index < spectrum.length; index += 1) {
